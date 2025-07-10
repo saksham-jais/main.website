@@ -1,7 +1,7 @@
 # VITERA Main Website
 
 ## To Install this :
-cd vitera-website
-npm install 
-npm fund
-npm run dev
+1. cd vitera-website
+2. npm install 
+3. npm fund
+4. npm run dev
