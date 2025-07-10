@@ -7,6 +7,10 @@ export default defineConfig({
   base: '/',
   server: {
     port: 3000,
-    open: true
+    open: true,
+    allowedHosts: [
+      'localhost',
+      // Add other allowed hosts (for testing purposes)
+    ]
   }
 })
