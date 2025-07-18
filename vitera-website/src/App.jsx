@@ -1,13 +1,56 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
+import MessageSection from './MessageSection'
+import Footer from './components/Footer'
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [glowEffect, setGlowEffect] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  // Responsive slides
+  const [visibleSlides, setVisibleSlides] = useState(window.innerWidth < 768 ? 1 : 3);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderRef = useRef(null);
+
+  // Images for mobile slider
+  const galleryImages = [
+    { src: "https://picsum.photos/id/1/800/600", alt: "Gallery image 1" },
+    { src: "https://picsum.photos/id/10/400/400", alt: "Gallery image 2" },
+    { src: "https://picsum.photos/id/100/400/400", alt: "Gallery image 3" },
+    { src: "https://picsum.photos/id/1000/400/400", alt: "Gallery image 4" },
+    { src: "https://picsum.photos/id/1001/400/800", alt: "Gallery image 5" },
+    { src: "https://picsum.photos/id/1002/400/400", alt: "Gallery image 6" },
+    { src: "https://picsum.photos/id/1003/400/400", alt: "Gallery image 7" },
+    { src: "https://picsum.photos/id/1004/400/400", alt: "Gallery image 8" },
+    { src: "https://picsum.photos/id/1005/800/400", alt: "Gallery image 9" },
+    { src: "https://picsum.photos/id/1006/400/400", alt: "Gallery image 10" },
+  ];
+
+  // Clamp currentSlide if visibleSlides changes
+  useEffect(() => {
+    if (currentSlide > galleryImages.length - visibleSlides) {
+      setCurrentSlide(Math.max(0, galleryImages.length - visibleSlides));
+    }
+  }, [visibleSlides]);
+
+  // Update slider position when currentSlide changes
+  useEffect(() => {
+    if (sliderRef.current) {
+      sliderRef.current.style.transform = `translateX(-${currentSlide * (100 / visibleSlides)}%)`;
+    }
+  }, [currentSlide, visibleSlides]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) =>
+      prev >= galleryImages.length - visibleSlides ? 0 : prev + 1
+    );
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) =>
+      prev <= 0 ? galleryImages.length - visibleSlides : prev - 1
+    );
   };
 
   // Simplified loading sequence
@@ -24,6 +67,40 @@ function App() {
     }, 1500);
 
     return () => clearTimeout(glowTimer);
+  }, []);
+
+  // Prevent body scroll when sidebar is open (mobile)
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    // Cleanup on unmount
+    return () => document.body.classList.remove('sidebar-open');
+  }, [isMenuOpen]);
+
+  // Toggle menu function
+  const toggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+  };
+
+  // Collage class assignment for dynamic collage
+  const getCollageClass = (idx) => {
+    // These match the original static collage
+    if (idx === 0) return "gallery-item gallery-item-large";
+    if (idx === 4) return "gallery-item gallery-item-tall";
+    if (idx === 8) return "gallery-item gallery-item-wide";
+    return "gallery-item";
+  };
+
+  // Responsive visible slides
+  useEffect(() => {
+    const handleResize = () => {
+      setVisibleSlides(window.innerWidth < 768 ? 1 : 3);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
@@ -73,13 +150,20 @@ function App() {
               <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
             </div>
             
+            {/* Mobile Navigation Overlay */}
+            <div className={`mobile-nav-overlay ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}></div>
+            
             {/* Mobile Navigation Menu */}
             <div className={`mobile-nav-menu ${isMenuOpen ? 'active' : ''}`}>
+              <div className="mobile-sidebar-logo">
+                <img src="/src/assets/vitera_logo.png" alt="VITERA Club Logo" />
+                <h3>VITERA Club</h3>
+              </div>
               <div className="mobile-nav-links">
-                <a href="#events" className="nav-link">Events</a>
-                <a href="#about" className="nav-link">About</a>
-                <a href="#team" className="nav-link">Team</a>
-                <a href="#feedback" className="nav-link">Feedback/Suggestions</a>
+                <a href="#events" className="nav-link" onClick={toggleMenu}>Events</a>
+                <a href="#about" className="nav-link" onClick={toggleMenu}>About</a>
+                <a href="#team" className="nav-link" onClick={toggleMenu}>Team</a>
+                <a href="#feedback" className="nav-link" onClick={toggleMenu}>Feedback/Suggestions</a>
               </div>
             </div>
           </div>
@@ -110,8 +194,59 @@ function App() {
             </div>
           </div>
         </section>
+
+        {/* Gallery Section */}
+        <section className="gallery-section">
+          <div className="container">
+            <h2 className="section-title">Our Gallery</h2>
+            
+            {/* Dynamic Desktop Collage Gallery */}
+            <div className="gallery-grid desktop-gallery">
+              {galleryImages.map((img, idx) => (
+                <div className={getCollageClass(idx)} key={idx}>
+                  <img src={img.src} alt={img.alt} />
+                </div>
+              ))}
+            </div>
+            
+            {/* Slider: 3 images at a time on desktop, 1 image at a time on mobile */}
+            <div className="mobile-gallery-container">
+              <div className="gallery-nav-buttons">
+                <button className="gallery-nav-btn prev-btn" onClick={prevSlide}>
+                  <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <button className="gallery-nav-btn next-btn" onClick={nextSlide}>
+                  <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mobile-gallery-slider" ref={sliderRef}>
+                {galleryImages.map((img, idx) => (
+                  <div
+                    className="mobile-gallery-slide"
+                    key={idx}
+                    style={{
+                      minWidth: visibleSlides === 1 ? "100%" : "calc(100% / 3)"
+                    }}
+                  >
+                    <img src={img.src} alt={img.alt} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        {/* Message Section */}
+        <MessageSection />
+
+        <Footer />
       </div>
-    </> 
+    </>
   )
 }
 
