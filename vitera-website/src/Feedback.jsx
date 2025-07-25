@@ -10,7 +10,7 @@ function Feedback() {
     e.preventDefault();
   
     try {
-      const response = await fetch("http://localhost:5000/api/feedback", {
+      const response = await fetch("https://vitera.onrender.com/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, feedback }),
